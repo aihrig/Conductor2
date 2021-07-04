@@ -1,0 +1,11 @@
+{
+  "name": "city-controller",
+  "version": "1.0.0",
+  "description": "Main City Controller",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arlo Ihrig",
+  "license": "ISC"
+}
