@@ -2,5 +2,5 @@
     "configuration": "FlashFreq=80,PartitionScheme=default,UploadSpeed=921600,DebugLevel=none",
     "board": "esp32:esp32:esp32thing",
     "port": "COM3",
-    "sketch": "train-controller\\main.ino"
+    "sketch": "main\\train-controller\\main.ino"
 }

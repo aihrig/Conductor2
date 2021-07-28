@@ -12,9 +12,6 @@
 #include "Wire.h"
 
 
-#define BUILTIN_LED = 13
-
-
 class Train {
   /* Private object properties and state */
   private:
@@ -25,7 +22,7 @@ class Train {
     int _headlight_left_pin = 0;
     int _headlight_right_pin = 0;
 
-  /* Public Methods */
+    /* Public Methods */
   public:
 
     String name() {
@@ -37,8 +34,15 @@ class Train {
       _headlight_left_pin = headlight_left_pin;
       _headlight_right_pin = headlight_right_pin;
 
+      // Set up pin mode to write for headlight LEDs.
+      pinMode(_headlight_left_pin, OUTPUT);
+      pinMode(_headlight_right_pin, OUTPUT);
+      pinMode(LED_BUILTIN, OUTPUT);
+    }
+
+    void begin() {
       //***** Configure the Motor Driver's Settings *****//
-      // commInterface is I2C_MODE 
+      // commInterface is I2C_MODE
       motorDriver.settings.commInterface = I2C_MODE;
 
       // set address if I2C configuration selected with the config jumpers
@@ -47,28 +51,31 @@ class Train {
       // set chip select if SPI selected with the config jumpers
       motorDriver.settings.chipSelectPin = 10;
 
-      //***** Initialize the driver, wait for idle *****//
-      while ( motorDriver.begin() != 0xA9 ) // Wait until a valid ID word is returned
+      //*****initialize the driver get wait for idle*****//
+      while (motorDriver.begin() != 0xA9) //Wait until a valid ID word is returned
       {
-        Serial.println( "ID mismatch for motor driver SPI, trying again" );
+        Serial.println("ID mismatch, trying again");
         delay(500);
       }
-      Serial.println( "ID matches 0xA9 for motor driver SPI" );
+      Serial.println("ID matches 0xA9");
 
-      // //  Check to make sure the motor driver is done looking for peripherals before beginning
-      // Serial.print("Waiting for enumeration of peripherals...");
-      // while ( motorDriver.ready() == false );
-      // Serial.println("Done.");
-      // Serial.println();
+      // Check to make sure the driver is done looking for peripherals before beginning
+      Serial.print("Waiting for enumeration...");
+      while (motorDriver.ready() == false);
+      Serial.println("Done.");
+      Serial.println();
 
-      // //  ***** wait for driver to become ready, and enable ***** //
-      // while ( motorDriver.busy() );
-      // motorDriver.enable(); //Enables the output driver hardware
+      //  ***** wait for driver to become ready, and enable ***** //
+      Serial.println("Waiting for motor driver to become ready...");
+      while (motorDriver.busy());
+      motorDriver.enable(); //Enables the output driver hardware
+      Serial.println("Done.");
+      Serial.println();
+    }
 
-      // Set up pin mode to write for headlight LEDs.
-      pinMode(_headlight_left_pin, OUTPUT);
-      pinMode(_headlight_right_pin, OUTPUT);
-
+    void ready() {
+      // Turn on built-in LED when instantiated to confirm ready status
+      digitalWrite(LED_BUILTIN, HIGH);
     }
 
     void setDirection(String direction) {
@@ -80,8 +87,7 @@ class Train {
     void fullSteamAhead() {
       Serial.println("Full steam ahead!!");
       // pass setDrive() a motor number, direction as 0(call 0 forward) or 1, and level from 0 to 255
-      motorDriver.setDrive( 0, 0, 0); //Stop motor
-      while (digitalRead(8) == 0); //Hold if jumper is placed between pin 8 and ground
+      motorDriver.setDrive( 0, 0, 0); // Stop motor
 
       // Smoothly move motor up to speed and back (drive level 0 to 255)
       for (int i = 0; i < 256; i++)
