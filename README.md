@@ -1,6 +1,6 @@
 # Conductor2 (WIP)
 
-## This project is a rebuild/update of my LEGO train control system.
+## This project is a (re)build of my LEGO train control system.
 
 #
 
