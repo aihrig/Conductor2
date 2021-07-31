@@ -1,10 +1,13 @@
-/* Train.cpp
+/* Train.h
 *
 * MCU train controller object for basic controls like
 * forward/reverse, speed, lights on/off/blink, and possibly
 * additional functionality in the future.
 *
 */
+#ifndef TRAIN_H
+#define TRAIN_H
+
 #include <String>
 #include <stdint.h>
 #include "SCMD.h"
@@ -95,6 +98,7 @@ class Train {
         motorDriver.setDrive( 0, 0, i);
         delay(5);
       }
+      delay(1000);
       for (int i = 255; i >= 0; i--)
       {
         motorDriver.setDrive( 0, 0, i);
@@ -103,14 +107,12 @@ class Train {
 
     }
 
-    void lightsOn() {
-      Serial.println("lights on");
+    void headlightsOn() {
       digitalWrite(_headlight_left_pin, HIGH);
       digitalWrite(_headlight_right_pin, HIGH);
     }
 
-    void lightsOff() {
-      Serial.println("lights off");
+    void headlightsOff() {
       digitalWrite(_headlight_left_pin, LOW);
       digitalWrite(_headlight_right_pin, LOW);
     }
@@ -122,3 +124,4 @@ class Train {
     // }
 };
 
+#endif
