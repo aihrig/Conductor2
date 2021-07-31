@@ -1,25 +1,20 @@
 // #include <aREST.h>
 #include <Arduino.h>
+#include <String>
 #include <WiFi.h>
 #include <Wire.h>
-#include <SPIFFS.h>
 #include <WebServer.h>
 #include <ArduinoJson.h>
+#include <PubSubClient.h>
 #include <AutoConnect.h>
-#define PubNub_BASE_CLIENT WiFiClient
-#include <PubNub.h>
-#include "library/Train/Train.h"
+#include "src/Config/Config.h"
+#include "src/Train/Train.h"
 
 // This is where the pub/sub keys will be stored once saved
-#define PARAM_FILE "/param.json"
-
-// TODO: Add fields to AutoConnect setup
-const static char pubkey[] = "pub-c-444d9350-c274-45cd-ab65-007aba298db9";
-const static char subkey[] = "sub-c-17598d96-f23b-11e6-b7fd-02ee2ddab7fe";
-const static char channel[] = "hello_world";
+Config config("/env.json");
 
 // Set up train with a name and left and right headlight LED pins.
-Train hs01("High Speed 01", 27, 12);
+Train hst01("High Speed 01", 27, 12);
 
 // Instantiate JSON document object with 1024 bytes of room
 DynamicJsonDocument doc(1024);
@@ -28,24 +23,34 @@ DynamicJsonDocument doc(1024);
 WebServer Server;
 // AutoConnect Portal(Server);
 AutoConnect portal;
-String pub_key;
-String sub_key;
 
-// This function will load the params file from the ESP32 file system
-String loadParams()
+// Set up a client for network communications
+WiFiClient MQTTclient;
+
+// PubSubClient / PubNub
+const char *mqttServer = "mqtt.pndsn.com";
+const int mqttPort = 1883;
+PubSubClient client(MQTTclient);
+String clientID;
+String channelName;
+void callback(char *topic, byte *payload, unsigned int length)
 {
-  if (!SPIFFS.begin(true))
+  String payload_buff;
+  for (int i = 0; i < length; i++)
   {
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    return "";
+    payload_buff = payload_buff + String((char)payload[i]);
   }
+  Serial.println(payload_buff); // Print out messages.
+}
 
-  File paramFile = SPIFFS.open(PARAM_FILE);
-  if (!paramFile)
+long lastReconnectAttempt = 0;
+boolean reconnect()
+{
+  if (client.connect(clientID.c_str()))
   {
-    Serial.println("Failed to open file for reading");
-    return "";
+    client.subscribe(channelName.c_str()); // Subscribe to channel.
   }
+  return client.connected();
 }
 
 // Respond to root http request
@@ -61,9 +66,29 @@ void setup()
   delay(500);
   Serial.begin(115200);
 
-  // Start hs01 Train
-  hs01.begin();
-  hs01.fullSteamAhead();
+  // Load configuration data
+  if (!config.loadParams())
+  {
+    Serial.println("### UNABLE TO LOAD CONFIGURATION DATA ###");
+    return;
+  }
+  else
+  {
+    channelName = config.channel();
+    clientID = config.pubkey() + "/" + config.subkey() + "/" + "hst01";
+    Serial.println("Configuration data loaded");
+  }
+
+  // Start hst01 Train
+  // TODO: Move to Train class
+  hst01.begin();
+  hst01.headlightsOn();
+  delay(500);
+  hst01.headlightsOff();
+  delay(500);
+  hst01.headlightsOn();
+  delay(500);
+  hst01.headlightsOff();
 
   // Respond to http request for root page
   Server.on("/", rootPage);
@@ -71,25 +96,50 @@ void setup()
   // AutoConnect configuration portal check, start pubnub if WiFi is ready
   if (portal.begin())
   {
-    PubNub.begin(pubkey, subkey); // Start PubNub.
-    Serial.println("PubNub is set up.");
     Serial.println("WiFi connected: " + WiFi.localIP().toString());
+    Serial.println("portal.begin() has been called");
+
+    client.setServer(mqttServer, mqttPort); // Connect to PubNub.
+    client.setCallback(callback);
+    lastReconnectAttempt = 0;
+    Serial.println("PubNub has been configured.");
+    
   }
 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  // hs01.ready();
-  // Serial.println(hs01.name());
-  // hs01.lightsOn();
-  // hs01.fullSteamAhead();
 }
 
 void loop()
 {
+  // Serial.println("Looping...");
 
   // TODO: move to separate function/file
-  // Subscribe to train control channel on PubNub
-  PubSubClient *sclient = PubNub.subscribe(channel);
+  if (!client.connected())
+  {
+    long now = millis();
+    if (now - lastReconnectAttempt > 5000)
+    { // Try to reconnect.
+      lastReconnectAttempt = now;
+      if (reconnect())
+      { // Attempt to reconnect.
+        lastReconnectAttempt = 0;
+      }
+    }
+  }
+  else
+  { // Connected.
+    client.loop();
+    client.publish(channelName.c_str(), "HST01 Connected"); // Publish message.
+    // TODO: Change to time elapsed instead of hard coded blocking-delay
+    delay(30000);
+  }
+
+  // TODO: Consider implementing direct REST server (aREST)
+  // Handle incoming web requests
+  portal.handleClient();
+
+  /*
   if (sclient != 0)
   {
     char nextChar;
@@ -108,24 +158,39 @@ void loop()
     if (error)
     {
       String errorInfo = "deserializeJson() failed: ";
-      errorInfo += String(+error.c_str());
+      errorInfo += String(error.c_str());
       Serial.println(errorInfo);
     }
     else
     {
       // serializeJson(doc, Serial); // DEBUG: write doc to serial
-      const char *message = doc[0]["message"];
-      const char *data = doc[0]["data"];
-      String msg = "Incoming message --> ";
+      const String message = doc[0]["message"];
+      const String data = doc[0]["data"];
+      String msg = "Incoming message -->";
       Serial.print(msg);
-      Serial.println(message);
-      msg = "Incoming data --> ";
+      Serial.print(message);
+      Serial.println("<--");
+      msg = "Incoming data -->";
       Serial.print(msg);
-      Serial.println(data);
+      Serial.print(data);
+      Serial.println("<--");
+
+      if ((message == "headlights") && (data == "on"))
+      {
+        Serial.println("Turning on headlights");
+        hst01.headlightsOn();
+      }
+      if ((message == "headlights") && (data == "off"))
+      {
+        Serial.println("Turning off headlights");
+        hst01.headlightsOff();
+      }
+
+      if ((message == "motor") && (data == "fullsteamahead"))
+      {
+        hst01.fullSteamAhead();
+      }
     }
   }
-
-  // TODO: Consider implementing direct REST server (aREST)
-  // Handle incoming web requests
-  portal.handleClient();
+*/
 }
