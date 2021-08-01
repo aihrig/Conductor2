@@ -76,13 +76,13 @@ class Train {
       Serial.println();
 
       // Signal that train is ready
-      this.headlightsOn();
+      this->headlightsOn();
       delay(500);
-      this.headlightsOff();
+      this->headlightsOff();
       delay(500);
-      this.headlightsOn();
+      this->headlightsOn();
       delay(500);
-      this.headlightsOff();
+      this->headlightsOff();
     }
 
     void ready() {

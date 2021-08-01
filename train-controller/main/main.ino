@@ -14,9 +14,9 @@
 Config config("/env.json");
 
 // Additional configuration items
-long lastPing = 0;
 long lastReconnectAttempt = 0;
 int pingInterval = 30 * 1000; // Ping/status pub message ever 30 seconds
+long lastPing = pingInterval; // Ping on start
 
 // Set up train with a name and left and right headlight LED pins.
 Train hst01("High Speed 01", 27, 12);
@@ -32,22 +32,55 @@ AutoConnect portal;
 // Set up a client for network communications
 WiFiClient MQTTclient;
 
-// PubSubClient / PubNub
+// PubSubClient / PubNub setup
 const char *mqttServer = "mqtt.pndsn.com";
 const int mqttPort = 1883;
 PubSubClient client(MQTTclient);
 String clientID;
 String channelName;
+
+// Callback for message processing
 void callback(char *topic, byte *payload, unsigned int length)
 {
+  Serial.println("Topic: " + String(topic));
   String payload_buff;
   for (int i = 0; i < length; i++)
   {
     payload_buff = payload_buff + String((char)payload[i]);
   }
-  Serial.println(payload_buff); // Print out messages.
+  Serial.print("Raw payload -->");
+  Serial.print(payload_buff); // Print out messages.
+  Serial.println("<--");
+
+  // Deserialize/parse the JSON document
+  DeserializationError error = deserializeJson(doc, payload_buff);
+  
+  // Test if parsing succeeds, and if so, process accordingly
+  if (error)
+  {
+    String errorInfo = "deserializeJson() failed: ";
+    errorInfo += String(error.c_str());
+    Serial.println(errorInfo);
+  }
+  else
+  {
+    // serializeJson(doc, Serial); // DEBUG: write doc to serial
+    const String message = doc[0]["message"];
+    const String data = doc[0]["data"];
+    String msg = "Incoming JSON message -->";
+    Serial.print(msg);
+    Serial.print(message);
+    Serial.println("<--");
+    msg = "Incoming JSON data -->";
+    Serial.print(msg);
+    Serial.print(data);
+    Serial.println("<--");
+  }
+
+
 }
 
+// PubSub client helper to reconnect if connection is lost
 boolean reconnect()
 {
   if (client.connect(clientID.c_str()))
@@ -70,17 +103,19 @@ void setup()
   delay(500);
   Serial.begin(115200);
 
-  // Load configuration data
+  // Load configuration data (from SPIFFS currently)
+  // TODO: Look into using AutoConnect library to store configuration
+  //       data from captive portal initial setup.
   if (!config.loadParams())
   {
-    Serial.println("### UNABLE TO LOAD CONFIGURATION DATA ###");
+    Serial.println("### UNABLE TO LOAD CONFIGURATION DATA - HALTING ###");
     return;
   }
   else
   {
     channelName = config.channel();
     clientID = config.pubkey() + "/" + config.subkey() + "/" + "hst01";
-    Serial.println("Configuration data loaded");
+    Serial.println("Configuration data loaded successfully!");
   }
 
   // Start hst01 Train
@@ -93,12 +128,14 @@ void setup()
   if (portal.begin())
   {
     Serial.println("WiFi connected: " + WiFi.localIP().toString());
-    Serial.println("portal.begin() has been called");
+    // DEBUG: Remove or standardize message with a logger
+    Serial.println("AutoConnect Portal has been started.");
 
-    client.setServer(mqttServer, mqttPort); // Connect to PubNub.
-    client.setCallback(callback);
+    // Configure pubsub client for PubNub
     lastReconnectAttempt = 0;
     lastPing = 0;
+    client.setServer(mqttServer, mqttPort);
+    client.setCallback(callback);
     Serial.println("PubNub has been configured.");
 
     // Turn on the built-in LED to signal that app is running
@@ -127,12 +164,14 @@ void loop()
     }
   }
   else
-  { // Connected.
+  { // PubSub client connected to PubNub, process accordingly.
     client.loop();
 
+    // Create and send status message each pingInterval
     long now = millis();
     if (now - lastPing > pingInterval) {
-      client.publish(channelName.c_str(), "HST01 Connected"); // Publish message.
+      // TODO: Make message dynamic based on train object's name.
+      client.publish(channelName.c_str(), "{\"status\":\"HST01 Connected\"}");
       lastPing = now;
     }
   }
