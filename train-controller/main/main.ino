@@ -13,6 +13,11 @@
 // This is where the pub/sub keys will be stored once saved
 Config config("/env.json");
 
+// Additional configuration items
+long lastPing = 0;
+long lastReconnectAttempt = 0;
+int pingInterval = 30 * 1000; // Ping/status pub message ever 30 seconds
+
 // Set up train with a name and left and right headlight LED pins.
 Train hst01("High Speed 01", 27, 12);
 
@@ -43,7 +48,6 @@ void callback(char *topic, byte *payload, unsigned int length)
   Serial.println(payload_buff); // Print out messages.
 }
 
-long lastReconnectAttempt = 0;
 boolean reconnect()
 {
   if (client.connect(clientID.c_str()))
@@ -80,15 +84,7 @@ void setup()
   }
 
   // Start hst01 Train
-  // TODO: Move to Train class
   hst01.begin();
-  hst01.headlightsOn();
-  delay(500);
-  hst01.headlightsOff();
-  delay(500);
-  hst01.headlightsOn();
-  delay(500);
-  hst01.headlightsOff();
 
   // Respond to http request for root page
   Server.on("/", rootPage);
@@ -102,12 +98,15 @@ void setup()
     client.setServer(mqttServer, mqttPort); // Connect to PubNub.
     client.setCallback(callback);
     lastReconnectAttempt = 0;
+    lastPing = 0;
     Serial.println("PubNub has been configured.");
-    
+
+    // Turn on the built-in LED to signal that app is running
+    // and WiFi is working.
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
   }
 
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void loop()
@@ -130,9 +129,12 @@ void loop()
   else
   { // Connected.
     client.loop();
-    client.publish(channelName.c_str(), "HST01 Connected"); // Publish message.
-    // TODO: Change to time elapsed instead of hard coded blocking-delay
-    delay(30000);
+
+    long now = millis();
+    if (now - lastPing > pingInterval) {
+      client.publish(channelName.c_str(), "HST01 Connected"); // Publish message.
+      lastPing = now;
+    }
   }
 
   // TODO: Consider implementing direct REST server (aREST)

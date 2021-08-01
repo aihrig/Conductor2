@@ -74,6 +74,15 @@ class Train {
       motorDriver.enable(); //Enables the output driver hardware
       Serial.println("Done.");
       Serial.println();
+
+      // Signal that train is ready
+      this.headlightsOn();
+      delay(500);
+      this.headlightsOff();
+      delay(500);
+      this.headlightsOn();
+      delay(500);
+      this.headlightsOff();
     }
 
     void ready() {
