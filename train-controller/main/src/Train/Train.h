@@ -7,7 +7,7 @@
 */
 #ifndef TRAIN_H
 #define TRAIN_H
-
+#include <ArduinoJson.h>
 #include <String>
 #include <stdint.h>
 #include "SCMD.h"
@@ -24,6 +24,8 @@ class Train {
     String _direction = "forward"; // or "reverse"
     int _headlight_left_pin = 0;
     int _headlight_right_pin = 0;
+    const int FORWARD = 0;
+    const int REVERSE = 1;
 
     /* Public Methods */
   public:
@@ -86,6 +88,7 @@ class Train {
     }
 
     void ready() {
+      // TODO: Move this out of Train class
       // Turn on built-in LED when instantiated to confirm ready status
       digitalWrite(LED_BUILTIN, HIGH);
     }
@@ -96,6 +99,7 @@ class Train {
       }
     }
 
+    // DEBUG: For testing motors
     void fullSteamAhead() {
       Serial.println("Full steam ahead!!");
       // pass setDrive() a motor number, direction as 0(call 0 forward) or 1, and level from 0 to 255
@@ -107,7 +111,7 @@ class Train {
         motorDriver.setDrive( 0, 0, i);
         delay(5);
       }
-      delay(1000);
+      delay(250);
       for (int i = 255; i >= 0; i--)
       {
         motorDriver.setDrive( 0, 0, i);
@@ -131,6 +135,39 @@ class Train {
     //   Serial.println("alternating lights");
     //   int 
     // }
+
+    void handleCommandMessages(DynamicJsonDocument &doc) {
+      String command = doc[0]["command"];
+      Serial.println(command);
+      Serial.println(String("Train.h: " + command));
+
+      /* Drive commands 
+         example: [{"command" : "drive", "direction" : "forward", "speed" : "25"}]
+      */
+      
+      /* Headlight commands 
+         example: [{"command":"headlights","data":"on"}]
+      */      
+      if (command == "headlights")
+      {
+        const String data = doc[0]["data"];
+        if (data == "on")
+        {
+          Serial.println("Turning on headlights");
+          this->headlightsOn();
+        }
+        if (data == "off")
+        {
+          Serial.println("Turning off headlights");
+          this->headlightsOff();
+        }
+      }
+
+      if (command == "fullsteamahead") 
+      {
+        this->fullSteamAhead();
+      }
+    }
 };
 
 #endif
