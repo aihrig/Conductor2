@@ -64,20 +64,14 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
   else
   {
-    // serializeJson(doc, Serial); // DEBUG: write doc to serial
-    const String message = doc[0]["message"];
-    const String data = doc[0]["data"];
-    String msg = "Incoming JSON message -->";
-    Serial.print(msg);
-    Serial.print(message);
-    Serial.println("<--");
-    msg = "Incoming JSON data -->";
-    Serial.print(msg);
-    Serial.print(data);
-    Serial.println("<--");
+    serializeJson(doc, Serial); // DEBUG: write doc to serial
+    const String command = doc[0]["command"];
+
+    if (command != "null")
+    {
+      hst01.handleCommandMessages(doc);
+    }
   }
-
-
 }
 
 // PubSub client helper to reconnect if connection is lost
@@ -180,58 +174,5 @@ void loop()
   // Handle incoming web requests
   portal.handleClient();
 
-  /*
-  if (sclient != 0)
-  {
-    char nextChar;
-    String message;
-    while (sclient->wait_for_data())
-    {
-      nextChar = sclient->read();
-      message += nextChar;
-    }
-    sclient->stop();
-
-    // Deserialize/parse the JSON document
-    DeserializationError error = deserializeJson(doc, message);
-
-    // Test if parsing succeeds, and if so, process accordingly
-    if (error)
-    {
-      String errorInfo = "deserializeJson() failed: ";
-      errorInfo += String(error.c_str());
-      Serial.println(errorInfo);
-    }
-    else
-    {
-      // serializeJson(doc, Serial); // DEBUG: write doc to serial
-      const String message = doc[0]["message"];
-      const String data = doc[0]["data"];
-      String msg = "Incoming message -->";
-      Serial.print(msg);
-      Serial.print(message);
-      Serial.println("<--");
-      msg = "Incoming data -->";
-      Serial.print(msg);
-      Serial.print(data);
-      Serial.println("<--");
-
-      if ((message == "headlights") && (data == "on"))
-      {
-        Serial.println("Turning on headlights");
-        hst01.headlightsOn();
-      }
-      if ((message == "headlights") && (data == "off"))
-      {
-        Serial.println("Turning off headlights");
-        hst01.headlightsOff();
-      }
-
-      if ((message == "motor") && (data == "fullsteamahead"))
-      {
-        hst01.fullSteamAhead();
-      }
-    }
-  }
-*/
+  
 }
