@@ -67,7 +67,7 @@ public:
     Serial.println("ID matches 0xA9");
 
     // Check to make sure the driver is done looking for peripherals before beginning
-    Serial.print("Waiting for enumeration...");
+    Serial.print("Waiting for peripheral enumeration...");
     while (motorDriver.ready() == false)
       ;
     Serial.println("Done.");
@@ -98,13 +98,6 @@ public:
     digitalWrite(LED_BUILTIN, HIGH);
   }
 
-  void setDirection(String direction)
-  {
-    if (direction == "forward")
-    {
-    }
-  }
-
   // DEBUG: For testing motors
   void fullSteamAhead()
   {
@@ -126,6 +119,7 @@ public:
     }
   }
 
+  // TODO: Find or build async delay library to ramp up/down speed
   void driveRamp(String direction, int speedPct)
   {
     int dir = 0;
@@ -139,6 +133,7 @@ public:
       dir = 1;
     }
 
+    // Only accept valid percentage of speed & convert to motor driver range 0 - 255
     if (speedPct >= 0 && speedPct <= 100) {
       int speed = map(speedPct, 0, 100, 0, 255);
       Serial.println("Mapped speed: " + String(speed));
