@@ -1,0 +1,20 @@
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-auto">
+            <div class="fwdButton">
+                <a id="forward" (click)="setState($event, 'forward')" (touchstart)="setState($event, 'forward')" class="btn">
+                    <fa-icon class="doubleUp" [icon]="faAngleDoubleUp"></fa-icon>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-auto">
+            <div class="revButton">
+                <a id="reverse" (click)="setState($event, 'reverse')" (touchstart)="setState($event, 'reverse')" class="btn">
+                    <fa-icon class="doubleDown" [icon]="faAngleDoubleDown"></fa-icon>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
