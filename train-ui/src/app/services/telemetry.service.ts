@@ -1,6 +1,7 @@
 import { Injectable, OnInit } from '@angular/core';
 import { PubNubAngular } from 'pubnub-angular2';
 import { BehaviorSubject, Observable, of } from 'rxjs';
+import { environment } from 'src/environments/environment';
 import { Telemetry } from '../interfaces/telemetry';
 
 @Injectable({
@@ -21,8 +22,8 @@ export class TelemetryService implements OnInit {
         this.channel = 'hst01';
         var _this = this;
         pubnub.init({
-            publishKey: 'pub-c-444d9350-c274-45cd-ab65-007aba298db9',
-            subscribeKey: 'sub-c-17598d96-f23b-11e6-b7fd-02ee2ddab7fe',
+            publishKey: environment.PUBLISH_KEY,
+            subscribeKey: environment.SUBSCRIBE_KEY,
         });
 
         pubnub.addListener({
