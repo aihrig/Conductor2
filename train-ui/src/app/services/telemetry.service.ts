@@ -57,7 +57,34 @@ export class TelemetryService implements OnInit {
 
     telemetryData!: Telemetry;
 
-    ngOnInit() {}
+
+    ngOnInit() {
+    }
+
+    updateStatus() {
+        console.log('updateStatus() fired');
+        // Fire off a request to the train for status
+        this.pubnub.publish(
+            {
+                message: [{
+                    command: 'getstatus',
+                }],
+                channel: this.channel,
+            },
+            function (status, response) {
+                if (status.error) {
+                    // handle error
+                    console.log(status);
+                } else {
+                    console.log(
+                        'message Published w/ timetoken',
+                        response.timetoken
+                    );
+                }
+            }
+        );
+
+    }
 
     getSpeed(): Observable<any> {
         return of(this.currentSpeed);
@@ -73,19 +100,21 @@ export class TelemetryService implements OnInit {
     }
 
     private handleMessage(message: any) {
-        if (typeof message.message === "object") {
+        if (typeof message.message === 'object') {
             let msg = message.message;
             console.log(`message.message: ${JSON.stringify(message.message)}`);
             if (msg.status) {
                 // message.message "{status: {speed:0, headlightsOn:0} }"
-                console.log(`message.message.status: ${JSON.stringify(message.message.status)}`);
-                
+                console.log(
+                    `message.message.status: ${JSON.stringify(
+                        message.message.status
+                    )}`
+                );
+
                 if (msg.status.speed) {
                     this.setSpeed(Number(msg.status.speed));
                 }
             }
         }
-
-
     }
 }
