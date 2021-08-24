@@ -21,11 +21,13 @@ private:
   SCMD motorDriver; //This creates the main object of one motor driver and connected peripherals.
   String _name = "";
   int _speed = 0;
+  bool _headlightsOn = false;
   String _direction = "forward"; // or "reverse"
   int _headlight_left_pin = 0;
   int _headlight_right_pin = 0;
   const int FORWARD = 0;
   const int REVERSE = 1;
+
 
   /* Public Methods */
 public:
@@ -44,6 +46,7 @@ public:
     pinMode(_headlight_left_pin, OUTPUT);
     pinMode(_headlight_right_pin, OUTPUT);
     pinMode(LED_BUILTIN, OUTPUT);
+
   }
 
   void begin()
@@ -139,6 +142,7 @@ public:
       Serial.println("Mapped speed: " + String(speed));
       // pass setDrive() a motor number, direction 0 (forward) or 1 (reverse), and level from 0 to 255
       motorDriver.setDrive(0, dir, speed);
+      _speed = speedPct;
     }
   }
 
@@ -146,18 +150,21 @@ public:
   {
     // pass setDrive() a motor number, direction 0 (forward) or 1 (reverse), and level from 0 to 255
     motorDriver.setDrive(0, 0, 0); // Stop motor
+    _speed = 0;
   }
 
   void headlightsOn()
   {
     digitalWrite(_headlight_left_pin, HIGH);
     digitalWrite(_headlight_right_pin, HIGH);
+    _headlightsOn = true;
   }
 
   void headlightsOff()
   {
     digitalWrite(_headlight_left_pin, LOW);
     digitalWrite(_headlight_right_pin, LOW);
+    _headlightsOn = false;
   }
 
   // TODO: Finish this, implement PWM to pulse lights back and forth
@@ -165,6 +172,12 @@ public:
   //   Serial.println("alternating lights");
   //   int
   // }
+
+  String getStatus() {
+    String statusMessage;
+    statusMessage = "{\"status\": {\"speed\":\"" + String(_speed) + "\", \"headlightsOn\":\"" + String(_headlightsOn) + "\"} }";
+    return statusMessage;
+  }
 
   void handleCommandMessages(const DynamicJsonDocument &doc)
   {

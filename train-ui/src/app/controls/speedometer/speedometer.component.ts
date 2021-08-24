@@ -25,6 +25,9 @@ export class SpeedometerComponent implements OnInit {
                 console.log(
                     `Subscription speed from SpeedometerComponent ${speed}`
                 );
+            },
+            err => {
+                console.log(err);
             }
         );
     }
