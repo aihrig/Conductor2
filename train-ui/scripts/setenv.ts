@@ -23,7 +23,8 @@ const envFileContent = `
     export const environment = {
         production: ${isProd},
         PUBLISH_KEY: '${process.env.PUBLISH_KEY}',
-        SUBSCRIBE_KEY: '${process.env.SUBSCRIBE_KEY}'
+        SUBSCRIBE_KEY: '${process.env.SUBSCRIBE_KEY}',
+        CHANNEL: '${process.env.CHANNEL}'
     };
 `;
 

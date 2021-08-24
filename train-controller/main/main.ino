@@ -70,6 +70,9 @@ void callback(char *topic, byte *payload, unsigned int length)
     if (command != "null")
     {
       hst01.handleCommandMessages(doc);
+      String trainStatus = hst01.getStatus();
+      Serial.println(trainStatus);
+      client.publish(channelName.c_str(), trainStatus.c_str());
     }
   }
 }

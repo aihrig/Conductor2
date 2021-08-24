@@ -9,24 +9,23 @@ import { Telemetry } from '../interfaces/telemetry';
 })
 export class TelemetryService implements OnInit {
     pubnub!: PubNubAngular;
-    channel: String;
+    channel: string;
     // currentSpeed: Number = 0.1;
-
-    private messageSource = new BehaviorSubject('default message');
-    currentMessage = this.messageSource.asObservable();
 
     private speedSource = new BehaviorSubject(0.1);
     currentSpeed = this.speedSource.asObservable();
 
     constructor(pubnub: PubNubAngular) {
-        this.channel = 'hst01';
+        this.channel = environment.CHANNEL;
+        this.pubnub = pubnub;
         var _this = this;
-        pubnub.init({
+
+        this.pubnub.init({
             publishKey: environment.PUBLISH_KEY,
             subscribeKey: environment.SUBSCRIBE_KEY,
         });
 
-        pubnub.addListener({
+        this.pubnub.addListener({
             status: function (st: {
                 category: string;
                 errorData: { message: any };
@@ -50,7 +49,7 @@ export class TelemetryService implements OnInit {
             },
         });
 
-        pubnub.subscribe({
+        this.pubnub.subscribe({
             channels: [this.channel],
             triggerEvents: ['message'],
         });
@@ -58,19 +57,64 @@ export class TelemetryService implements OnInit {
 
     telemetryData!: Telemetry;
 
-    ngOnInit() {}
+
+    ngOnInit() {
+    }
+
+    updateStatus() {
+        console.log('updateStatus() fired');
+        // Fire off a request to the train for status
+        this.pubnub.publish(
+            {
+                message: [{
+                    command: 'getstatus',
+                }],
+                channel: this.channel,
+            },
+            function (status, response) {
+                if (status.error) {
+                    // handle error
+                    console.log(status);
+                } else {
+                    console.log(
+                        'message Published w/ timetoken',
+                        response.timetoken
+                    );
+                }
+            }
+        );
+
+    }
 
     getSpeed(): Observable<any> {
         return of(this.currentSpeed);
     }
 
+    setSpeed(speed: number): void {
+        console.log(`Speed: ${speed}`);
+        if (speed === 0) {
+            this.speedSource.next(0.1);
+        } else {
+            this.speedSource.next(speed);
+        }
+    }
+
     private handleMessage(message: any) {
-        // this.currentSpeed = message.message[0].status.speed;
-        // console.log('New current speed: ' + this.currentSpeed);
-        console.log(`Message: ${JSON.stringify(message)}`);
-        console.log(`Speed: ${message.message[0].status.speed}`);
+        if (typeof message.message === 'object') {
+            let msg = message.message;
+            console.log(`message.message: ${JSON.stringify(message.message)}`);
+            if (msg.status) {
+                // message.message "{status: {speed:0, headlightsOn:0} }"
+                console.log(
+                    `message.message.status: ${JSON.stringify(
+                        message.message.status
+                    )}`
+                );
 
-        this.speedSource.next(message.message[0].status.speed);        
-
+                if (msg.status.speed) {
+                    this.setSpeed(Number(msg.status.speed));
+                }
+            }
+        }
     }
 }
