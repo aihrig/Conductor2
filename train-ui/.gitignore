@@ -7,6 +7,11 @@
 # Only exists if Bazel was run
 /bazel-out
 
+
+# environment data
+.env
+**/environments
+
 # dependencies
 /node_modules
 
