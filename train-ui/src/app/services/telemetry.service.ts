@@ -10,7 +10,7 @@ import { Telemetry } from '../interfaces/telemetry';
 export class TelemetryService implements OnInit {
     pubnub!: PubNubAngular;
     channel: string;
-    // currentSpeed: Number = 0.1;
+    lastSpeed!: String;
 
     private speedSource = new BehaviorSubject(0.1);
     currentSpeed = this.speedSource.asObservable();
@@ -45,7 +45,8 @@ export class TelemetryService implements OnInit {
                 }
             },
             message: function (message: any) {
-                _this.handleMessage(message);
+                if (message.message.status)
+                    _this.handleMessage(message);
             },
         });
 
@@ -55,19 +56,63 @@ export class TelemetryService implements OnInit {
         });
     }
 
-    telemetryData!: Telemetry;
-
-
-    ngOnInit() {
-    }
+    ngOnInit() {}
 
     updateStatus() {
         console.log('updateStatus() fired');
         // Fire off a request to the train for status
         this.pubnub.publish(
             {
+                message: [
+                    {
+                        command: 'getstatus',
+                    },
+                ],
+                channel: this.channel,
+            },
+            function (status, response) {
+                if (status.error) {
+                    // handle error
+                    console.log(status);
+                } else {
+                    console.log(
+                        'message Published w/ timetoken',
+                        response.timetoken
+                    );
+                }
+            }
+        );
+    }
+
+    getSpeed(): String {
+        return this.lastSpeed;
+    }
+
+    increaseSpeed(amount: number) {
+        this.setSpeed(Number(this.lastSpeed) + amount);
+    }
+    
+    decreaseSpeed(amount: number) {
+        this.setSpeed(Number(this.lastSpeed) - amount);
+    }
+
+    setSpeed(speed: number): void {
+        console.log(`setSpeed() -> Speed: ${speed}`);
+        if (speed === 0) {
+            this.speedSource.next(0.1);
+            this.lastSpeed = "0.1";
+        } else {
+            this.speedSource.next(speed);
+            this.lastSpeed = String(speed);
+        }
+
+        // TODO: Handle direction
+        this.pubnub.publish(
+            {
                 message: [{
-                    command: 'getstatus',
+                    command: 'drive',
+                    direction: 'forward',
+                    speed: speed
                 }],
                 channel: this.channel,
             },
@@ -86,34 +131,23 @@ export class TelemetryService implements OnInit {
 
     }
 
-    getSpeed(): Observable<any> {
-        return of(this.currentSpeed);
-    }
-
-    setSpeed(speed: number): void {
-        console.log(`Speed: ${speed}`);
-        if (speed === 0) {
-            this.speedSource.next(0.1);
-        } else {
-            this.speedSource.next(speed);
-        }
-    }
-
     private handleMessage(message: any) {
+
+        // this.currentSpeed.subscribe(value => {
+        //     console.log(
+        //         'telemetry.service -> handleMessage() : currentSpeed: ' + value
+        //     );
+        // });
         if (typeof message.message === 'object') {
             let msg = message.message;
-            console.log(`message.message: ${JSON.stringify(message.message)}`);
-            if (msg.status) {
-                // message.message "{status: {speed:0, headlightsOn:0} }"
-                console.log(
-                    `message.message.status: ${JSON.stringify(
-                        message.message.status
-                    )}`
-                );
-
-                if (msg.status.speed) {
-                    this.setSpeed(Number(msg.status.speed));
+            // console.log(`message.message: ${JSON.stringify(msg)}`);
+            if (msg.status.speed) {
+                let speed = msg.status.speed;
+                if (speed == 0) {
+                    speed = 0.1;
                 }
+                this.speedSource.next(speed);
+                this.lastSpeed = String(speed);
             }
         }
     }
