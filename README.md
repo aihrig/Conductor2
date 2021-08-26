@@ -24,6 +24,14 @@ More to come...
 ![train_open_cropped](https://user-images.githubusercontent.com/12666421/127811045-a784a203-ba51-4db9-9185-d2d95f510b1f.jpg)
 ![train_closed_cropped](https://user-images.githubusercontent.com/12666421/127811052-e8a602e8-07c4-462c-a379-3ff2ccb4d792.jpg)
 
+## Train UI
+- [Code](https://github.com/aihrig/Conductor2/tree/master/train-ui)
+- Future Items:
+  - [x] Basic speedometer
+  - [x] Speed increase/decrease/stop control
+  - [ ] Add headlight on/off control
+  - [ ] Add forward/reverse direction control
+
 ## Track Controller
 - Code (coming soon)
 - Images (coming soon)
