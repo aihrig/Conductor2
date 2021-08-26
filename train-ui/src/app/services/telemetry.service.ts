@@ -10,7 +10,7 @@ import { Telemetry } from '../interfaces/telemetry';
 export class TelemetryService implements OnInit {
     pubnub!: PubNubAngular;
     channel: string;
-    // currentSpeed: Number = 0.1;
+    lastSpeed: String = '0.1';
 
     private speedSource = new BehaviorSubject(0.1);
     currentSpeed = this.speedSource.asObservable();
@@ -45,74 +45,117 @@ export class TelemetryService implements OnInit {
                 }
             },
             message: function (message: any) {
-                _this.handleMessage(message);
+                console.log(
+                    `#DEBUG# telemetry.service incoming message -> ${JSON.stringify(
+                        message
+                    )}`
+                );
+                if (message.message.status) _this.handleMessage(message);
             },
         });
 
         this.pubnub.subscribe({
             channels: [this.channel],
-            triggerEvents: ['message'],
+            triggerEvents: ['message', 'status'],
         });
     }
 
-    telemetryData!: Telemetry;
-
-
-    ngOnInit() {
-    }
+    ngOnInit() {}
 
     updateStatus() {
-        console.log('updateStatus() fired');
+        console.log('#DEBUG# updateStatus() fired');
         // Fire off a request to the train for status
         this.pubnub.publish(
             {
-                message: [{
-                    command: 'getstatus',
-                }],
+                message: [
+                    {
+                        command: 'getstatus',
+                    },
+                ],
                 channel: this.channel,
             },
             function (status, response) {
                 if (status.error) {
                     // handle error
-                    console.log(status);
+                    console.log(`#DEBUG# ${status}`);
                 } else {
                     console.log(
-                        'message Published w/ timetoken',
-                        response.timetoken
+                        `#DEBUG# message Published w/ timetoken ${response.timetoken}`
                     );
                 }
             }
         );
-
     }
 
-    getSpeed(): Observable<any> {
-        return of(this.currentSpeed);
+    getSpeed(): String {
+        return this.lastSpeed;
+    }
+
+    increaseSpeed(amount: number) {
+        this.setSpeed(Number(this.lastSpeed) + amount);
+    }
+
+    decreaseSpeed(amount: number) {
+        this.setSpeed(Number(this.lastSpeed) - amount);
     }
 
     setSpeed(speed: number): void {
-        console.log(`Speed: ${speed}`);
+        // Limit speed range to 0 - 100
+        speed = speed >= 100 ? 100 : speed;
+        speed = speed <= 0 ? 0.1 : speed;
+        console.log(`#DEBUG# setSpeed() -> Speed: ${speed}`);
+
         if (speed === 0) {
             this.speedSource.next(0.1);
+            this.lastSpeed = '0.1';
         } else {
             this.speedSource.next(speed);
+            this.lastSpeed = String(speed);
         }
+
+        // TODO: Handle direction
+        this.pubnub.publish(
+            {
+                message: [
+                    {
+                        command: 'drive',
+                        direction: 'forward',
+                        speed: speed,
+                    },
+                ],
+                channel: this.channel,
+            },
+            function (status, response) {
+                if (status.error) {
+                    // handle error
+                    console.log(`#DEBUG# status`);
+                } else {
+                    console.log(
+                        `message Published w/ timetoken ${response.timetoken}`
+                    );
+                }
+            }
+        );
     }
 
     private handleMessage(message: any) {
+        console.log(
+            `#DEBUG# telemetry.service handleMessage() called with -> ${JSON.stringify(
+                message
+            )}`
+        );
         if (typeof message.message === 'object') {
             let msg = message.message;
-            console.log(`message.message: ${JSON.stringify(message.message)}`);
-            if (msg.status) {
-                // message.message "{status: {speed:0, headlightsOn:0} }"
-                console.log(
-                    `message.message.status: ${JSON.stringify(
-                        message.message.status
-                    )}`
-                );
-
-                if (msg.status.speed) {
-                    this.setSpeed(Number(msg.status.speed));
+            if (msg.hasOwnProperty('status')) {
+                if (msg.status.hasOwnProperty('speed')) {
+                    console.log(`#DEBUG# SPEED -------------->>> ${msg.status.speed}`);
+                    // this.setSpeed(msg.status.speed);
+                    let speed = msg.status.speed;
+                    if (speed == 0) {
+                        speed = 0.1;
+                    }
+                    this.speedSource.next(speed);
+                    this.lastSpeed = String(speed);
                 }
             }
         }

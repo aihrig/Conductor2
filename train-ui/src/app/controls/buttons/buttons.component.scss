@@ -1,21 +1,58 @@
+// Button color scheme
+$button-bgColor: hsl(0deg 0% 30%);
+$button-frontColor: adjust-hue($button-bgColor, 5deg);
+$button-frontColor: lighten($button-frontColor, 10%);
+$button-text-color: white;
+
+// Stop button color
+$button-stop-bgColor: hsl(0deg 100% 32%);
+$button-stop-frontColor: adjust-hue($button-stop-bgColor, 5deg);
+$button-stop-frontColor: lighten($button-stop-frontColor, 10%);
+
+
+
 .container {
     margin-top: -50px;
 }
 
-.doubleUp,
-.doubleDown {
+.stopIcon {
+    color: red;
     font-size: 50px;
-//     background-color: #E6EBF8;
-//     border-radius: 50px;
-//     padding: 5px;
-//     border: 2px solid #999;
-//     padding: 20px;
-//     text-align: center;
-//     text-decoration: none;
-//     display: inline-block;
-//     margin: 4px 2px;
 }
 
-.downButton {
-    color: red;
+#stopContainer {
+    background: $button-stop-bgColor;
 }
+
+#stopButton {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    background: $button-stop-frontColor;
+}
+
+.pushable {
+    background: $button-bgColor;
+    border-radius: 12px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    outline-offset: 4px;
+}
+
+.pushable:active .front {
+    transform: translateY(-2px);
+}
+
+.front {
+    display: block;
+    padding: 5px 15px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande',
+        'Lucida Sans', Arial, sans-serif;
+    background: $button-frontColor;
+    color: $button-text-color;
+    transform: translateY(-6px);
+}
+
+

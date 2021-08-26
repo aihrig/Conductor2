@@ -22,15 +22,14 @@ export class SpeedometerComponent implements OnInit {
             (speed) => {
                 this.currentSpeed = String(speed);
                 this.setOptions();
-                console.log(
-                    `Subscription speed from SpeedometerComponent ${speed}`
-                );
+                // console.log(`Subscription speed from SpeedometerComponent ${speed}`);
             },
             (err) => {
                 console.log(err);
             }
         );
 
+        console.log('Calling telemetryService.updateStatus() from speedometer ngOnInit()');
         this.telemetryService.updateStatus();
     }
     
