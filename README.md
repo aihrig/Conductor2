@@ -1,9 +1,9 @@
-# Conductor2
-This project is a (re)build of my LEGO train IoT control system (work in progress).
+# Conductor
+This project is a re-build of my LEGO train IoT control system (work in progress).
 
 ## Overview
 
-I replaced train's infra-red control system with an ESP32 using Arduino C++.  It makes an internet connection using WiFi (initially configured through a captive portal), and is controlled via pub-sub message (throw away keys right now).
+I replaced the train's infra-red control system with an ESP32 using Arduino C++ for train controller and Angular 12 for the UI.  It makes an internet connection using WiFi (initially configured through a captive portal), and is controlled via pub-sub messages.
 
 I am currently rebuilding everything from scratch, so things are not all there yet, and are in `debug` and `todo` modes.
 
