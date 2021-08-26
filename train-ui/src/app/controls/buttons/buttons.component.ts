@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { faAngleDoubleUp } from '@fortawesome/free-solid-svg-icons';
 import { faAngleDoubleDown } from '@fortawesome/free-solid-svg-icons';
+import { faStop } from '@fortawesome/free-solid-svg-icons';
 import { TelemetryService } from 'src/app/services/telemetry.service';
 import { trigger, state, style, animate, transition } from '@angular/animations';
 
@@ -17,6 +18,7 @@ export class ButtonsComponent implements OnInit {
 
     faAngleDoubleUp = faAngleDoubleUp;
     faAngleDoubleDown = faAngleDoubleDown;
+    faStop = faStop;
 
     speedIncrement: number = 10;
     speedMax: number = 100;
@@ -34,6 +36,11 @@ export class ButtonsComponent implements OnInit {
             case 'reverse': {
                 console.log('reverse action');
                 this.telemetryService.decreaseSpeed(this.speedIncrement);
+                break;
+            }
+            case 'stop': {
+                console.log('stop action');
+                this.telemetryService.setSpeed(0);
                 break;
             }
         }

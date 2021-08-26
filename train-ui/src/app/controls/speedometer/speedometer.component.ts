@@ -29,7 +29,7 @@ export class SpeedometerComponent implements OnInit {
             }
         );
 
-        console.log('Calling telemetryService.updateStatus() from speedometer');
+        console.log('Calling telemetryService.updateStatus() from speedometer ngOnInit()');
         this.telemetryService.updateStatus();
     }
     
