@@ -3,7 +3,14 @@ import { faAngleDoubleUp } from '@fortawesome/free-solid-svg-icons';
 import { faAngleDoubleDown } from '@fortawesome/free-solid-svg-icons';
 import { faStop } from '@fortawesome/free-solid-svg-icons';
 import { TelemetryService } from 'src/app/services/telemetry.service';
-import { trigger, state, style, animate, transition } from '@angular/animations';
+import {
+    trigger,
+    state,
+    style,
+    animate,
+    transition,
+} from '@angular/animations';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-buttons',
@@ -12,17 +19,29 @@ import { trigger, state, style, animate, transition } from '@angular/animations'
     animations: [],
 })
 export class ButtonsComponent implements OnInit {
+    speedIncrement: number = 10;
+    speedMax: number = 100;
+    speedMin: number = 0;
+    headlightsOn: boolean = false;
+    headlightSubscription!: Subscription;
+
     constructor(private telemetryService: TelemetryService) {}
 
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        this.headlightSubscription = this.telemetryService.headlightsOn.subscribe(
+            (headlightsOn) => {
+                this.headlightsOn = headlightsOn;
+                console.log(`Subscription headlightSubscription from ButtonsComponent ${headlightsOn}`);
+            },
+            (err) => {
+                console.log(err);
+            }
+        );
+    }
 
     faAngleDoubleUp = faAngleDoubleUp;
     faAngleDoubleDown = faAngleDoubleDown;
     faStop = faStop;
-
-    speedIncrement: number = 10;
-    speedMax: number = 100;
-    speedMin: number = 0;
 
     setState(evt: Event, button: String) {
         evt.preventDefault();
@@ -44,6 +63,12 @@ export class ButtonsComponent implements OnInit {
                 break;
             }
         }
+    }
 
+    toggleHeadlights(evt: Event) {
+        evt.preventDefault();
+        console.log('#DEBUG# buttons.component: headlight toggle action');
+        this.headlightsOn = !this.headlightsOn;
+        this.telemetryService.toggleHeadlights();
     }
 }

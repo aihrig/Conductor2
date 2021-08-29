@@ -1,3 +1,15 @@
+// Bootstrap adjustments
+$enable-negative-margins: true;
+
+* {
+   -ms-user-select:none;
+   -moz-user-select:none;
+   -webkit-user-select:none;
+   -webkit-touch-callout: none;
+   -khtml-user-select: none;
+    user-select:none;
+}
+
 // Button color scheme
 $button-bgColor: hsl(0deg 0% 30%);
 $button-frontColor: adjust-hue($button-bgColor, 5deg);
@@ -10,9 +22,13 @@ $button-stop-frontColor: adjust-hue($button-stop-bgColor, 5deg);
 $button-stop-frontColor: lighten($button-stop-frontColor, 10%);
 
 
-
 .container {
     margin-top: -50px;
+}
+
+.headlights {
+    color: $button-frontColor;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
 .stopIcon {
@@ -54,5 +70,3 @@ $button-stop-frontColor: lighten($button-stop-frontColor, 10%);
     color: $button-text-color;
     transform: translateY(-6px);
 }
-
-

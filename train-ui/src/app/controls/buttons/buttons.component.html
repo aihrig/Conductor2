@@ -1,5 +1,38 @@
-<div class="container">
-    <div class="row justify-content-center">
+<div class="container headlights">
+    <div class="row pb-2">
+        <div class="col">
+            
+        </div>
+        <div class="col-5 px-4">
+            Headlights
+        </div>
+    </div>
+    <div class="row align-items-center pb-4">
+        <div class="col">
+        </div>
+        <div class="col">
+            <div class="row text-uppercase text-center">
+                <div class="col pt-2">
+                </div>
+                <div class="col mx-n1">
+                    <ui-switch
+                        (click)="toggleHeadlights($event)" (touchstart)="toggleHeadlights($event)"
+                        id="headlightSwitch"
+                        size="medium" 
+                        checkedLabel="ON" 
+                        uncheckedLabel="OFF" 
+                        color="yellow" 
+                        defaultBgColor="darkgray"
+                        [checked]="headlightsOn"
+                        [(ngModel)]="headlightsOn"
+                    ></ui-switch>
+                </div>
+                <div class="col pt-2">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center pt-3">
         <div class="col-auto">
             <div class="btn pushable">
                 <span id="fwdButton" class="front" (click)="setState($event, 'forward')" (touchstart)="setState($event, 'forward')">
