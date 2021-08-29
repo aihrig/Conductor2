@@ -9,11 +9,15 @@ import { Telemetry } from '../interfaces/telemetry';
 })
 export class TelemetryService implements OnInit {
     pubnub!: PubNubAngular;
-    channel: string;
+    channel: String;
     lastSpeed: String = '0.1';
+    lastHeadlight: Boolean = false;
 
     private speedSource = new BehaviorSubject(0.1);
     currentSpeed = this.speedSource.asObservable();
+
+    private headlightSource = new BehaviorSubject(false);
+    headlightsOn = this.headlightSource.asObservable();
 
     constructor(pubnub: PubNubAngular) {
         this.channel = environment.CHANNEL;
@@ -87,6 +91,36 @@ export class TelemetryService implements OnInit {
         );
     }
 
+    toggleHeadlights() {
+        // TODO: See if this is needed? Can't we just use the subscription itself?
+        this.lastHeadlight = !this.lastHeadlight; // toggle local headlights
+        this.headlightSource.next(this.lastHeadlight.valueOf()); // update subscription
+        let onOff = this.lastHeadlight ? 'on' : 'off'; // Set value for train API
+        console.log('#DEBUG send toggle headlights message to train')
+        this.pubnub.publish(
+            {
+                message: [
+                    {
+                        command: 'headlights',
+                        data: onOff,
+                    },
+                ],
+                channel: this.channel,
+            },
+            function (status, response) {
+                if (status.error) {
+                    // handle error
+                    console.log(`#DEBUG# status`);
+                } else {
+                    console.log(
+                        `message Published w/ timetoken ${response.timetoken}`
+                    );
+                }
+            }
+        );
+    }
+
+
     getSpeed(): String {
         return this.lastSpeed;
     }
@@ -148,7 +182,7 @@ export class TelemetryService implements OnInit {
             let msg = message.message;
             if (msg.hasOwnProperty('status')) {
                 if (msg.status.hasOwnProperty('speed')) {
-                    console.log(`#DEBUG# SPEED -------------->>> ${msg.status.speed}`);
+                    console.log(`#DEBUG# Speed: ${msg.status.speed}`);
                     // this.setSpeed(msg.status.speed);
                     let speed = msg.status.speed;
                     if (speed == 0) {
@@ -156,6 +190,17 @@ export class TelemetryService implements OnInit {
                     }
                     this.speedSource.next(speed);
                     this.lastSpeed = String(speed);
+                }
+
+                if (msg.status.hasOwnProperty('headlightsOn')) {
+                    let headlightState = Boolean(
+                        Number(msg.status.headlightsOn)
+                    );
+                    this.headlightSource.next(headlightState);
+                    this.lastHeadlight = headlightState;
+                    console.log(
+                        `#DEBUG# Headlights on: ${this.headlightsOn}`
+                    );
                 }
             }
         }

@@ -160,6 +160,7 @@ public:
     _speed = 0;
   }
 
+  // TODO: Create a toggleHeadlights() function
   void headlightsOn()
   {
     digitalWrite(_headlight_left_pin, HIGH);
@@ -180,6 +181,7 @@ public:
   //   int
   // }
 
+  // TODO: Add a getHumanStatus??
   String getStatus() {
     String statusMessage;
     statusMessage = "{\"status\": {\"speed\":\"" + String(_speed) + "\", \"headlightsOn\":\"" + String(_headlightsOn) + "\"} }";
@@ -203,6 +205,7 @@ public:
       driveRamp(doc[0]["direction"], doc[0]["speed"]);
     }
 
+    // TODO: Change this to use 1/0 instead of on/off
     /* Headlight commands 
          example: [{"command":"headlights","data":"on"}]
       */

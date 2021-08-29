@@ -8,6 +8,7 @@ import { SpeedometerComponent } from './controls/speedometer/speedometer.compone
 
 // import * as echarts from 'echarts';
 import { NgxEchartsModule } from 'ngx-echarts';
+import { UiSwitchModule } from 'ngx-ui-switch';
 
 import { ButtonsComponent } from './controls/buttons/buttons.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -23,6 +24,7 @@ import { PubNubAngular } from 'pubnub-angular2';
         NgxEchartsModule.forRoot({
             echarts: () => import('echarts'),
         }),
+        UiSwitchModule,
         FontAwesomeModule,
         NgbModule,
     ],
